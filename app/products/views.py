@@ -1,3 +1,9 @@
-from django.shortcuts import render
+from django.http import JsonResponse
+from .models import Product, ProductRating
+from .serializers import ProductSerializer, ProductRatingSerializer
 
-# Create your views here.
+
+def get_products(request):
+    products = Product.objects.all()
+    serializer = ProductSerializer(products, many=True)
+    return JsonResponse({"products": serializer.data})
