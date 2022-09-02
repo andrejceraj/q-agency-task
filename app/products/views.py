@@ -1,6 +1,7 @@
 from datetime import datetime
 from django.http import JsonResponse, HttpResponse
 from django.contrib.auth.models import User
+from django.core.paginator import Paginator
 from .models import Product, ProductRating
 from .serializers import ProductSerializer, ProductRatingSerializer
 from rest_framework import response, status
@@ -11,7 +12,17 @@ from rest_framework.decorators import api_view
 def products(request):
     if request.method == "GET":
         products = Product.objects.all()
-        serializer = ProductSerializer(products, many=True)
+        if request.GET.get("order_by"):
+            order_value = request.GET.get("order_by")
+            if request.GET.get("order") == "dsc":
+                order_value = "-" + order_value
+            products = products.order_by(order_value)
+
+        per_page = request.GET.get("per_page", 10)
+        page = request.GET.get("page", 1)
+        paginator = Paginator(products, per_page)
+        page_objects = paginator.get_page(page)
+        serializer = ProductSerializer(page_objects, many=True)
         return JsonResponse({"products": serializer.data})
 
     elif request.method == "POST":
