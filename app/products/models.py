@@ -19,3 +19,6 @@ class ProductRating(models.Model):
 
     def __str__(self):
         return "{} rated {} with {} stars".format(self.user, self.product, self.value)
+
+    class Meta:
+        unique_together = ('user', 'product',)

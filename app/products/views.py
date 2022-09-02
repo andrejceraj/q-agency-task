@@ -1,5 +1,6 @@
 from datetime import datetime
 from django.http import JsonResponse, HttpResponse
+from django.contrib.auth.models import User
 from .models import Product, ProductRating
 from .serializers import ProductSerializer, ProductRatingSerializer
 from rest_framework import response, status
@@ -48,3 +49,28 @@ def product(request, id):
     elif request.method == "DELETE":
         product.delete()
         return HttpResponse(status=status.HTTP_200_OK)
+
+
+@api_view(["POST"])
+def rate_product(request, id):
+    try:
+        user = User.objects.get(username=request.data["username"])
+    except:
+        return JsonResponse({"status": "false", "message": "username not found"}, status=status.HTTP_404_NOT_FOUND)
+
+    new_product_rating = {
+        "user": user.id,
+        "product": id,
+        "value": request.data["value"],
+    }
+    serializer = ProductRatingSerializer(data=new_product_rating)
+    if serializer.is_valid():
+        serializer.save()
+        product = Product.objects.get(pk=id)
+        product_ratings = product.productrating_set.all()
+        pr_sum = sum(list(map(lambda pr: pr.value, product_ratings)))
+        product.rating = pr_sum / len(product_ratings)
+        product.save()
+        return JsonResponse(serializer.data, status=status.HTTP_201_CREATED)
+    else:
+        return JsonResponse(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
