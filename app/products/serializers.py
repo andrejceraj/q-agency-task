@@ -1,5 +1,8 @@
 from rest_framework import serializers
 from .models import Product, ProductRating
+from rest_framework.validators import UniqueTogetherValidator
+from django.contrib.auth import get_user_model
+from django.contrib.auth.models import User
 
 
 class ProductSerializer(serializers.ModelSerializer):
@@ -11,9 +14,32 @@ class ProductSerializer(serializers.ModelSerializer):
 class ProductRatingSerializer(serializers.ModelSerializer):
     def validate(self, data):
         if data["value"] < 0 or data["value"] > 5:
-            raise serializers.ValidationError({"value": "must be between 0 and 5"})
+            raise serializers.ValidationError(
+                {"value": "must be between 0 and 5"})
         return data
 
     class Meta:
         model = ProductRating
-        fields = ["id", "user", "product", "value"]
+        fields = ["id", "user_id", "product_id", "value"]
+
+        validators = [
+            UniqueTogetherValidator(
+                queryset=ProductRating.objects.all(),
+                fields=['user_id', 'product_id'],
+                message="user already rated this product"
+            )
+        ]
+
+
+class CreateUserSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = get_user_model()
+        fields = ('username', 'password')
+
+    def create(self, validated_data):
+        password = validated_data.pop('password')
+        user = User.objects.create_user(validated_data['username'])
+        user.set_password(password)
+        user.save()
+        return user

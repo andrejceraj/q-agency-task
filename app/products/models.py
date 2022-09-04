@@ -13,12 +13,12 @@ class Product(models.Model):
 
 
 class ProductRating(models.Model):
-    user = models.ForeignKey(to=User, on_delete=models.SET_NULL, null=True)
-    product = models.ForeignKey(to=Product, on_delete=models.CASCADE)
+    user_id = models.ForeignKey(to=User, on_delete=models.SET_NULL, null=True)
+    product_id = models.ForeignKey(to=Product, on_delete=models.CASCADE)
     value = models.PositiveSmallIntegerField(null=False)
 
     def __str__(self):
-        return "{} rated {} with {} stars".format(self.user, self.product, self.value)
+        return "{} rated {} with {} stars".format(self.user_id, self.product_id, self.value)
 
     class Meta:
-        unique_together = ('user', 'product',)
+        unique_together = ('user_id', 'product_id',)

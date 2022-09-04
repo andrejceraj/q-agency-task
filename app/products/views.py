@@ -1,11 +1,11 @@
 from datetime import datetime
 from django.http import JsonResponse, HttpResponse
-from django.contrib.auth.models import User
 from django.core.paginator import Paginator
-from .models import Product, ProductRating
-from .serializers import ProductSerializer, ProductRatingSerializer
+from .models import Product
+from .serializers import ProductSerializer, ProductRatingSerializer, CreateUserSerializer
 from rest_framework import response, status
-from rest_framework.decorators import api_view
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.decorators import api_view, permission_classes
 
 
 @api_view(["GET", "POST"])
@@ -17,6 +17,8 @@ def products(request):
             if request.GET.get("order") == "dsc":
                 order_value = "-" + order_value
             products = products.order_by(order_value)
+        else:
+            products = products.order_by("name")
 
         per_page = request.GET.get("per_page", 10)
         page = request.GET.get("page", 1)
@@ -63,15 +65,11 @@ def product(request, id):
 
 
 @api_view(["POST"])
+@permission_classes([IsAuthenticated])
 def rate_product(request, id):
-    try:
-        user = User.objects.get(username=request.data["username"])
-    except:
-        return JsonResponse({"status": "false", "message": "username not found"}, status=status.HTTP_404_NOT_FOUND)
-
     new_product_rating = {
-        "user": user.id,
-        "product": id,
+        "user_id": request.user.id,
+        "product_id": id,
         "value": request.data["value"],
     }
     serializer = ProductRatingSerializer(data=new_product_rating)
@@ -82,6 +80,15 @@ def rate_product(request, id):
         pr_sum = sum(list(map(lambda pr: pr.value, product_ratings)))
         product.rating = pr_sum / len(product_ratings)
         product.save()
-        return JsonResponse(serializer.data, status=status.HTTP_201_CREATED)
+        return JsonResponse(ProductSerializer(product).data, status=status.HTTP_201_CREATED)
     else:
         return JsonResponse(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+@api_view(['POST'])
+def user_create(request):
+    if request.method == 'POST':
+        serializer = CreateUserSerializer(data=request.data)
+        if serializer.is_valid(raise_exception=True):
+            serializer.save()
+            return JsonResponse(serializer.data, safe=False)
