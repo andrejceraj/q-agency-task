@@ -4,16 +4,16 @@ from itertools import product
 from django.core.paginator import Paginator
 from django.http import HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404
+from drf_spectacular.utils import OpenApiParameter, extend_schema
 from rest_framework import status
 from rest_framework.decorators import action, api_view
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.viewsets import ViewSet
 
-from drf_spectacular.utils import extend_schema, OpenApiParameter
-
 from .models import Product
-from .serializers import (CreateUserSerializer, ProductCreateSerializer, ProductRatingSerializer,
-                          ProductSerializer, ProductRatingCreateSerializer)
+from .serializers import (CreateUserSerializer, ProductRatingRequestSerializer,
+                          ProductRatingSerializer, ProductRequestSerializer,
+                          ProductSerializer)
 
 
 class ProductViewSet(ViewSet):
@@ -47,9 +47,9 @@ class ProductViewSet(ViewSet):
         serializer = ProductSerializer(page_objects, many=True)
         return JsonResponse({"products": serializer.data})
 
-    @extend_schema(request=ProductCreateSerializer)
+    @extend_schema(request=ProductRequestSerializer)
     def create(self, request):
-        create_serializer = ProductCreateSerializer(data=request.data)
+        create_serializer = ProductRequestSerializer(data=request.data)
         if create_serializer.is_valid():
             product = create_serializer.save()
             return JsonResponse(ProductSerializer(product).data, status=status.HTTP_201_CREATED)
@@ -60,7 +60,7 @@ class ProductViewSet(ViewSet):
         product = get_object_or_404(self.queryset, pk=pk)
         return JsonResponse(ProductSerializer(product).data)
 
-    @extend_schema(request=ProductCreateSerializer)
+    @extend_schema(request=ProductRequestSerializer)
     def update(self, request, pk=None):
         product = get_object_or_404(self.queryset, pk=pk)
         new_product = request.data
@@ -75,7 +75,7 @@ class ProductViewSet(ViewSet):
         product.delete()
         return HttpResponse(status=status.HTTP_200_OK)
 
-    @extend_schema(request=ProductRatingCreateSerializer)
+    @extend_schema(request=ProductRatingRequestSerializer)
     @action(detail=True, methods=["POST"], url_path="rate-product", permission_classes=[IsAuthenticated])
     def rate_product(self, request, pk=None):
         new_product_rating = {

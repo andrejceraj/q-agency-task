@@ -12,7 +12,7 @@ class ProductSerializer(serializers.ModelSerializer):
         fields = ["id", "name", "price", "rating", "updated_at"]
 
 
-class ProductCreateSerializer(serializers.ModelSerializer):
+class ProductRequestSerializer(serializers.ModelSerializer):
     class Meta:
         model = Product
         fields = ["name", "price"]
@@ -38,7 +38,7 @@ class ProductRatingSerializer(serializers.ModelSerializer):
         ]
 
 
-class ProductRatingCreateSerializer(serializers.ModelSerializer):
+class ProductRatingRequestSerializer(serializers.ModelSerializer):
     class Meta:
         model = ProductRating
         fields = ["value"]
