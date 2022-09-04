@@ -1,8 +1,9 @@
-from rest_framework import serializers
-from .models import Product, ProductRating
-from rest_framework.validators import UniqueTogetherValidator
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import User
+from rest_framework import serializers
+from rest_framework.validators import UniqueTogetherValidator
+
+from .models import Product, ProductRating
 
 
 class ProductSerializer(serializers.ModelSerializer):

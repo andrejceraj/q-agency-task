@@ -1,16 +1,23 @@
 from datetime import datetime
-from django.http import JsonResponse, HttpResponse
+
 from django.core.paginator import Paginator
-from .models import Product
-from .serializers import ProductSerializer, ProductRatingSerializer, CreateUserSerializer
-from rest_framework import response, status
+from django.http import HttpResponse, JsonResponse
+from django.shortcuts import get_object_or_404
+from rest_framework import status
+from rest_framework.decorators import action, api_view
 from rest_framework.permissions import IsAuthenticated
-from rest_framework.decorators import api_view, permission_classes
+from rest_framework.viewsets import ViewSet
+
+from .models import Product
+from .serializers import (CreateUserSerializer, ProductRatingSerializer,
+                          ProductSerializer)
 
 
-@api_view(["GET", "POST"])
-def products(request):
-    if request.method == "GET":
+class ProductViewSet(ViewSet):
+    queryset = Product.objects.all()
+    serializer_class = ProductSerializer
+
+    def list(self, request):
         products = Product.objects.all()
         if request.GET.get("order_by"):
             order_value = request.GET.get("order_by")
@@ -27,7 +34,7 @@ def products(request):
         serializer = ProductSerializer(page_objects, many=True)
         return JsonResponse({"products": serializer.data})
 
-    elif request.method == "POST":
+    def create(self, request):
         new_product = request.data
         new_product["rating"] = 0
         new_product["updated_at"] = datetime.now()
@@ -38,20 +45,12 @@ def products(request):
         else:
             return JsonResponse(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
+    def retrieve(self, request, pk=None):
+        product = get_object_or_404(self.queryset, pk=pk)
+        return JsonResponse(self.serializer_class(product).data)
 
-@api_view(["GET", "PUT", "DELETE"])
-def product(request, id):
-
-    try:
-        product = Product.objects.get(pk=id)
-    except:
-        return response.Response(status=status.HTTP_404_NOT_FOUND)
-
-    if request.method == "GET":
-        serializer = ProductSerializer(product)
-        return JsonResponse(serializer.data)
-
-    elif request.method == "PUT":
+    def update(self, request, pk=None):
+        product = get_object_or_404(self.queryset, pk=pk)
         new_product = request.data
         new_product["rating"] = product.rating
         new_product["updated_at"] = datetime.now()
@@ -59,37 +58,35 @@ def product(request, id):
         serializer.update(product, new_product)
         return JsonResponse(serializer.data, status=status.HTTP_200_OK)
 
-    elif request.method == "DELETE":
+    def destroy(self, request, pk=None):
+        product = get_object_or_404(self.queryset, pk=pk)
         product.delete()
         return HttpResponse(status=status.HTTP_200_OK)
 
-
-@api_view(["POST"])
-@permission_classes([IsAuthenticated])
-def rate_product(request, id):
-    new_product_rating = {
-        "user_id": request.user.id,
-        "product_id": id,
-        "value": request.data["value"],
-    }
-    serializer = ProductRatingSerializer(data=new_product_rating)
-    if serializer.is_valid():
-        serializer.save()
-        product = Product.objects.get(pk=id)
-        product_ratings = product.productrating_set.all()
-        pr_sum = sum(list(map(lambda pr: pr.value, product_ratings)))
-        product.rating = pr_sum / len(product_ratings)
-        product.save()
-        return JsonResponse(ProductSerializer(product).data, status=status.HTTP_201_CREATED)
-    else:
-        return JsonResponse(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    @action(detail=True, methods=["POST"], url_path="rate-product", permission_classes=[IsAuthenticated])
+    def rate_product(self, request, pk=None):
+        new_product_rating = {
+            "user_id": request.user.id,
+            "product_id": pk,
+            "value": request.data["value"],
+        }
+        serializer = ProductRatingSerializer(data=new_product_rating)
+        if serializer.is_valid():
+            serializer.save()
+            product = Product.objects.get(pk=pk)
+            product_ratings = product.productrating_set.all()
+            pr_sum = sum(list(map(lambda pr: pr.value, product_ratings)))
+            product.rating = pr_sum / len(product_ratings)
+            product.save()
+            return JsonResponse(ProductSerializer(product).data, status=status.HTTP_201_CREATED)
+        else:
+            return JsonResponse(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
 @api_view(['POST'])
 def user_create(request):
-
     if request.method == 'POST':
         serializer = CreateUserSerializer(data=request.data)
         if serializer.is_valid(raise_exception=True):
             serializer.save()
-            return JsonResponse(serializer.data, safe=False)
+            return HttpResponse(status=status.HTTP_201_CREATED)

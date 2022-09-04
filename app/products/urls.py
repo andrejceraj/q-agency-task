@@ -1,10 +1,14 @@
 from django.urls import path
+from rest_framework.authtoken.views import obtain_auth_token
+from rest_framework.routers import DefaultRouter
+
 from . import views
 
+router = DefaultRouter()
+router.register('products', views.ProductViewSet, basename="products")
+
 urlpatterns = [
-    path('products/', views.products, name="products"),
-    path('products/<int:id>/', views.product, name="product"),
-    path('products/<int:id>/rate-product/',
-         views.rate_product, name="rate-product"),
-    path('register/', views.user_create)
+    path('register/', views.user_create),
+    path('login/', obtain_auth_token),
 ]
+urlpatterns += router.urls
