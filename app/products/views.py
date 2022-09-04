@@ -87,6 +87,7 @@ def rate_product(request, id):
 
 @api_view(['POST'])
 def user_create(request):
+
     if request.method == 'POST':
         serializer = CreateUserSerializer(data=request.data)
         if serializer.is_valid(raise_exception=True):
