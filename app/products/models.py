@@ -6,7 +6,7 @@ class Product(models.Model):
     name = models.CharField(max_length=200, null=False, unique=True)
     price = models.DecimalField(null=False, decimal_places=2, max_digits=12)
     rating = models.FloatField(null=False, default=0)
-    updated_at = models.DateTimeField(null=False)
+    updated_at = models.DateTimeField(null=False, auto_now_add=True)
 
     def __str__(self):
         return self.name

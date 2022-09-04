@@ -12,6 +12,12 @@ class ProductSerializer(serializers.ModelSerializer):
         fields = ["id", "name", "price", "rating", "updated_at"]
 
 
+class ProductCreateSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Product
+        fields = ["name", "price"]
+
+
 class ProductRatingSerializer(serializers.ModelSerializer):
     def validate(self, data):
         if data["value"] < 0 or data["value"] > 5:
@@ -30,6 +36,12 @@ class ProductRatingSerializer(serializers.ModelSerializer):
                 message="user already rated this product"
             )
         ]
+
+
+class ProductRatingCreateSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ProductRating
+        fields = ["value"]
 
 
 class CreateUserSerializer(serializers.ModelSerializer):

@@ -1,4 +1,5 @@
 from datetime import datetime
+from itertools import product
 
 from django.core.paginator import Paginator
 from django.http import HttpResponse, JsonResponse
@@ -8,15 +9,27 @@ from rest_framework.decorators import action, api_view
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.viewsets import ViewSet
 
+from drf_spectacular.utils import extend_schema, OpenApiParameter
+
 from .models import Product
-from .serializers import (CreateUserSerializer, ProductRatingSerializer,
-                          ProductSerializer)
+from .serializers import (CreateUserSerializer, ProductCreateSerializer, ProductRatingSerializer,
+                          ProductSerializer, ProductRatingCreateSerializer)
 
 
 class ProductViewSet(ViewSet):
     queryset = Product.objects.all()
     serializer_class = ProductSerializer
 
+    @extend_schema(parameters=[
+        OpenApiParameter(
+            name="per_page", description="Items per page", location="query"),
+        OpenApiParameter(
+            name="page", description="Current page number", location="query"),
+        OpenApiParameter(
+            name="order_by", description="Field by which the results are ordered", location="query"),
+        OpenApiParameter(
+            name="order", description="Ordering direction", location="query"),
+    ])
     def list(self, request):
         products = Product.objects.all()
         if request.GET.get("order_by"):
@@ -34,21 +47,20 @@ class ProductViewSet(ViewSet):
         serializer = ProductSerializer(page_objects, many=True)
         return JsonResponse({"products": serializer.data})
 
+    @extend_schema(request=ProductCreateSerializer)
     def create(self, request):
-        new_product = request.data
-        new_product["rating"] = 0
-        new_product["updated_at"] = datetime.now()
-        serializer = ProductSerializer(data=new_product)
-        if serializer.is_valid():
-            serializer.save()
-            return JsonResponse(serializer.data, status=status.HTTP_201_CREATED)
+        create_serializer = ProductCreateSerializer(data=request.data)
+        if create_serializer.is_valid():
+            product = create_serializer.save()
+            return JsonResponse(ProductSerializer(product).data, status=status.HTTP_201_CREATED)
         else:
-            return JsonResponse(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+            return JsonResponse(create_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     def retrieve(self, request, pk=None):
         product = get_object_or_404(self.queryset, pk=pk)
-        return JsonResponse(self.serializer_class(product).data)
+        return JsonResponse(ProductSerializer(product).data)
 
+    @extend_schema(request=ProductCreateSerializer)
     def update(self, request, pk=None):
         product = get_object_or_404(self.queryset, pk=pk)
         new_product = request.data
@@ -63,6 +75,7 @@ class ProductViewSet(ViewSet):
         product.delete()
         return HttpResponse(status=status.HTTP_200_OK)
 
+    @extend_schema(request=ProductRatingCreateSerializer)
     @action(detail=True, methods=["POST"], url_path="rate-product", permission_classes=[IsAuthenticated])
     def rate_product(self, request, pk=None):
         new_product_rating = {
@@ -83,6 +96,7 @@ class ProductViewSet(ViewSet):
             return JsonResponse(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
+@extend_schema(request=CreateUserSerializer, responses={201: None})
 @api_view(['POST'])
 def user_create(request):
     if request.method == 'POST':
