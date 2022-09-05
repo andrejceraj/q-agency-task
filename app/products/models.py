@@ -1,3 +1,4 @@
+from itertools import product
 from django.db import models
 from django.contrib.auth.models import User
 
@@ -10,6 +11,9 @@ class Product(models.Model):
 
     def __str__(self):
         return self.name
+
+    def _search_value(self):
+        return "{} {} {}".format(self.name, self.price, round(self.rating, 3))
 
 
 class ProductRating(models.Model):
