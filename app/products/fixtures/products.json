@@ -1,0 +1,52 @@
+[
+    {
+        "model": "products.product",
+        "pk": 1,
+        "fields": {
+            "name": "computer",
+            "price": 5250.00,
+            "rating": 0,
+            "updated_at": "2022-09-05T12:00:00.000000"
+        }
+    },
+    {
+        "model": "products.product",
+        "pk": 2,
+        "fields": {
+            "name": "mouse",
+            "price": 179.99,
+            "rating": 0,
+            "updated_at": "2022-09-05T12:05:00.000000"
+        }
+    },
+    {
+        "model": "products.product",
+        "pk": 3,
+        "fields": {
+            "name": "keyboard",
+            "price": 203.50,
+            "rating": 0,
+            "updated_at": "2022-09-05T12:10:00.000000"
+        }
+    },
+    {
+        "model": "products.product",
+        "pk": 4,
+        "fields": {
+            "name": "headphones",
+            "price": 113.15,
+            "rating": 0,
+            "updated_at": "2022-09-05T12:15:00.000000"
+        }
+    },
+    {
+        "model": "products.product",
+        "pk": 5,
+        "fields": {
+            "name": "mousepad",
+            "price": 30.00,
+            "rating": 0,
+            "updated_at": "2022-09-05T12:20:00.000000"
+        }
+    }
+]
