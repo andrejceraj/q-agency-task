@@ -19,7 +19,7 @@ docker-compose up
 
 ### Load dummy data
 
-In base directory run:
+In base directory, while the docker container is running, run:
 ```
 sh load_dummy_data.sh
 ```
