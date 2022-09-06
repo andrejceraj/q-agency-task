@@ -1,10 +1,13 @@
 from datetime import datetime
 from multiprocessing import AuthenticationError
 from telnetlib import AUTHENTICATION
-from django.test import TestCase, Client
-from .models import Product, ProductRating
-from .serializers import ProductSerializer, ProductRatingSerializer, ProductRequestSerializer, CreateUserSerializer
+
 from django.contrib.auth.models import User
+from django.test import Client, TestCase
+
+from .models import Product, ProductRating
+from .serializers import (CreateUserSerializer, ProductRatingSerializer,
+                          ProductRequestSerializer, ProductSerializer)
 
 
 class ProductTestCase(TestCase):
